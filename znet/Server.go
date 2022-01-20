@@ -1,6 +1,7 @@
 package znet
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -11,10 +12,27 @@ import (
 //定义服务器模块
 type Server struct {
 	//相应服务器处理业务需要接受的信息
-	Name      string //服务器的名称
+	Name string //服务器的名称
+
 	IPVersion string //服务器的IP版本
-	IP        string //服务器监听的IP号
-	Port      int    //服务器监听的端口号
+
+	IP string //服务器监听的IP号
+
+	Port int //服务器监听的端口号
+}
+
+//定义当前客户端链接所绑定的 handle api， 目前写死，之后会使用用户自定义的回显相关的业务
+func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
+
+	//回显业务
+	fmt.Println("[Conn Handle] CallBackToClient ... ")
+
+	if _, err := conn.Write(data[:cnt]); err != nil {
+		fmt.Println("write back buf error ", err)
+		return errors.New("CallBackToClient error")
+	}
+
+	return nil
 }
 
 //============== 实现 ziface.IServer 里的接口 ========
@@ -38,7 +56,8 @@ func (s *Server) Start() {
 		}
 
 		fmt.Println("start zinx server", s.Name, "success, now listenning")
-
+		var cid uint32
+		cid = 0
 		//3 阻塞等待客户端的连接，处理（读写）客户端链接的业务
 		//  启动 server 的网络链接业务
 
@@ -50,27 +69,12 @@ func (s *Server) Start() {
 				continue //因为在一个 goroutine 里面
 			}
 
-			//TODO Server.Start() 设置服务器最大连接控制,如果超过最大连接，那么则关闭此新的连接
+			// 将处理新连接的业务方法 和 conn 进行绑定， 得到我们的链接模块
+			dealConn := NewConnection(conn, cid, CallBackToClient)
+			cid++
 
-			//TODO Server.Start() 处理该新连接请求的业务方法， 此时应该有 handler 和 conn是绑定的
-
-			//v0.1版本实现一个回显的业务即可
-			go func() {
-				for {
-					buf := make([]byte, 512)
-					cnt, err := conn.Read(buf)
-					if err != nil {
-						fmt.Println("receive buf error", err)
-						continue
-					}
-
-					//函数回显
-					if _, err := conn.Write(buf[:cnt]); err != nil {
-						fmt.Println("write back err", err)
-						continue
-					}
-				}
-			}()
+			//启动当前的链接业务
+			go dealConn.Start()
 		}
 	}()
 }
@@ -78,8 +82,6 @@ func (s *Server) Start() {
 //停止服务器方法实现
 func (s *Server) Stop() {
 	fmt.Println("[STOP] Zinx server, name :", s.Name)
-
-	//TODO Server.Stop() 进行服务器关闭连接清理的相应的业务
 }
 
 //运行服务器方法实现
