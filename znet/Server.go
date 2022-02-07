@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/chaggle/zinx-study/utils"
 	"github.com/chaggle/zinx-study/ziface"
 )
 
@@ -26,7 +27,15 @@ type Server struct {
 
 //启动服务器方法实现
 func (s *Server) Start() {
-	fmt.Printf("[START] Server listenner at IP : %s, Port : %d, is starting\n", s.IP, s.Port)
+
+	//打印输出
+	fmt.Printf("[START] Server listenner at IP : %s, Port : %d, is starting\n",
+		utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
+	fmt.Printf("[Zinx] Version : %s, MaxConn : %d, MaxPackageSize : %d\n",
+		utils.GlobalObject.Version,
+		utils.GlobalObject.MaxConn,
+		utils.GlobalObject.MaxPackageSize)
+
 	go func() {
 		//1 获取一个TCP的addr
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.IP, s.Port))
@@ -89,12 +98,15 @@ func (s *Server) AddRouter(router ziface.IRouter) {
 }
 
 //初始化服务器方法实现
-func NewServer(name string) ziface.IServer {
+func NewServer() ziface.IServer {
+	//先初始化全局配置文件
+	utils.GlobalObject.Reload()
+
 	s := &Server{
-		Name:      name,
-		IPVersion: "tcp4",
-		IP:        "127.0.0.1",
-		Port:      8999,
+		Name:      utils.GlobalObject.Name,
+		IPVersion: "tcp4", // 还没有实现 tcp6 版本
+		IP:        utils.GlobalObject.Host,
+		Port:      utils.GlobalObject.TcpPort,
 		Router:    nil,
 	}
 

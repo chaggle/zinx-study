@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/chaggle/zinx-study/utils"
 	"github.com/chaggle/zinx-study/ziface"
 )
 
@@ -42,8 +43,8 @@ func (c *Connection) StartRead() {
 	defer c.Stop()
 
 	for {
-		//读取客户端的数据到 buf 中
-		buf := make([]byte, 512)
+		//读取客户端的数据到 buf 中, 开辟大小为用户自定义设置
+		buf := make([]byte, utils.GlobalObject.MaxPackageSize)
 
 		_, err := c.Conn.Read(buf)
 		if err != nil {

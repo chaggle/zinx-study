@@ -18,15 +18,21 @@ draft: true
 > 方法
 >
 > 初始化服务器 -- NewServer(name string) ziface.IServer
+>
 > 启动服务器 -- Start()
+>
 > 停止服务器 -- Stop()
+>
 > 运行服务器 -- Serve()
 >
 > 属性
 >
 > 名称 -- name
+>
 > IP 版本 -- IPVersion
+>
 > 监听 IP -- IP
+>
 > 监听端口 -- Port
 
 ## V0.2 简单的链接封装和业务绑定
@@ -34,55 +40,94 @@ draft: true
 > 方法
 >
 > 启动链接 -- Start()
+>
 > 停止链接 -- Stop()
+>
 > 获取当前链接的 conn 对象 (套接字) -- GetTCPConnection() \*net.TCPConn
+>
 > 得到链接 ID -- GetConnID() uint32
+>
 > 得到客户端连接的地址和端口 -- RemoteAddr() net.TCPAddr
+>
 > 发送数据的方法 -- Send(data []byte) error
 >
 > 属性
->
 > socket TCP 套接字 -- Conn \*net.TCPConn
+>
 > 链接的 ID -- ConnID uint32
+>
 > 当前链接状态 (是否已经关闭) -- isClosed bool
+>
 > 与当前链接所绑定的处理业务与方法 -- handlerAPI ziface.HandleFunc
+>
 > 等待退出的 channel 管道 -- ExitChan chan bool
 
 ## V0.3 基础的 router 模块
 
->     Request 请求封装
->     	将链接与数据绑定一起
->     		属性
->     			链接的句柄 -- GetConnection() IConnection
->     			请求数据 -- GetData() []byte
->     		方法
->     			得到链接-- func (r *Request) GetConnection() ziface.IConnection
->     			得到数据 -- func (r *Request) GetData() []byte
->     			新建一个 Request 请求
->     Router 模块
->     	抽象的 IRouter
->     		处理业务之前的方法
->     			PreHandle(request IRequest)	//处理conn业务之前的方法
->     		处理业务的主方法
->     			Handle(request IRequest)	//处理conn业务的主方法
->     		处理业务之后的方法
->     			PostHandle(request IRequest)	//处理conn业务之后的方法
->     	具体的 BaseRouter
->     		处理业务之前的方法
->     			func (br *BaseRouter) PreHandle(request ziface.IRequest)
->     		处理业务的主方法
->     			func (br *BaseRouter) Handle(request ziface.IRequest)
->     		处理业务之后的方法
->     			func (br *BaseRouter) PostHandle(request ziface.IRequest)
->     	zinx 集成 Router 模块
->     		IServer 增添路由功能 - AddRouter(router IRouter)
->     		Server 类增加 Router 成员 ---> 去掉之前的HandAPI
->     		Connection 类绑定一个 Router 成员
->     		在 Connection 调用已经注册过的 Router 处理业务
+> Request 请求封装
 >
->     使用zinxV0.3版本开发服务器
->     	1、创建一个服务器句柄
->     	2、给当前的 zinx 框架加一个自定义的业务路由
->     	3、启动 server
->     	4、需要继承 BaseRouter 去实现三个接口的方法
->     当前版本只有一个路由能使用，目前只能使用一个路由模块，在加入路由模块会使上一个路由模块方法进行重写覆盖。
+> 将链接与数据绑定一起
+>
+> 属性
+> 链接的句柄 -- GetConnection() IConnection
+>
+> 请求数据 -- GetData() []byte
+>
+> 方法
+> 得到链接-- func (r \*Request) GetConnection() ziface.IConnection
+>
+> 得到数据 -- func (r \*Request) GetData() []byte
+>
+> 新建一个 Request 请求
+>
+> Router 模块
+>
+> 抽象的 IRouter
+>
+> 处理业务之前的方法 PreHandle(request IRequest) //处理 conn 业务之前的方法
+>
+> 处理业务的主方法 Handle(request IRequest) //处理 conn 业务的主方法
+>
+> 处理业务之后的方法 PostHandle(request IRequest) //处理 conn 业务之后的方法
+>
+> 具体的 BaseRouter
+>
+> 处理业务之前的方法 func (br \*BaseRouter) PreHandle(request ziface.IRequest)
+>
+> 处理业务的主方法 func (br \*BaseRouter) Handle(request ziface.IRequest)
+>
+> 处理业务之后的方法 func (br \*BaseRouter) PostHandle(request ziface.IRequest)
+>
+> zinx 集成 Router 模块
+>
+> IServer 增添路由功能 - AddRouter(router IRouter)
+>
+> Server 类增加 Router 成员 ---> 去掉之前的 HandAPI
+>
+> Connection 类绑定一个 Router 成员
+>
+> 在 Connection 调用已经注册过的 Router 处理业务
+>
+> 使用 zinxV0.3 版本开发服务器
+>
+> 1、创建一个服务器句柄
+>
+> 2、给当前的 zinx 框架加一个自定义的业务路由
+>
+> 3、启动 server
+>
+> 4、需要继承 BaseRouter 去实现三个接口的方法
+>
+> 当前版本只有一个路由能使用，目前只能使用一个路由模块，在加入路由模块会使上一个路由模块方法进行重写覆盖。
+
+## V0.4 全局配置模块
+
+> 路径 ：服务器项目主地址/conf/zinx.json (用户进行填写)
+>
+> 创建一个 zinx 的全局配置模块 utils/globalobj.go
+>
+> 初始化后读取用户配置的 zinx.json ---> globalobj 对象中对应的 zinx 服务器句柄代码进行参数替换
+>
+> 提供一个 GlobalObject 对象 --- var GlobalObject \*GlobalObj
+>
+> 使用 zinx0.4 版本进行开发
