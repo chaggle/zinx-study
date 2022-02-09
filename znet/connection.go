@@ -1,10 +1,11 @@
 package znet
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 
-	"github.com/chaggle/zinx-study/utils"
 	"github.com/chaggle/zinx-study/ziface"
 )
 
@@ -43,19 +44,41 @@ func (c *Connection) StartRead() {
 	defer c.Stop()
 
 	for {
-		//读取客户端的数据到 buf 中, 开辟大小为用户自定义设置
-		buf := make([]byte, utils.GlobalObject.MaxPackageSize)
+		//创建拆包解包对象
+		dp := NewDataPack()
 
-		_, err := c.Conn.Read(buf)
-		if err != nil {
-			fmt.Println("receive buf err ", err)
+		//读取客户端的 Msg Head 二进制流的 8 个字节
+		headData := make([]byte, dp.GetHeadLen())
+		if _, err := io.ReadFull(c.GetTCPConnection(), headData); err != nil {
+			fmt.Println("read msg head error: ", err)
+			c.ExitChan <- true
 			continue
 		}
+
+		//拆包，得到 msgID 和 datalen 放在 msg 中
+		msg, err := dp.Unpack(headData)
+		if err != nil {
+			fmt.Println("unpack error: ", err)
+			c.ExitChan <- true
+			continue
+		}
+
+		//根据得到的 datalen 读取 data，放在 msg.Data 中
+		var data []byte
+		if msg.GetDataLen() > 0 {
+			data = make([]byte, msg.GetDataLen()) //此处小细节是 := 为临时复制，生命周期不能走出 if 语句，要变为 =
+			if _, err := io.ReadFull(c.GetTCPConnection(), data); err != nil {
+				fmt.Println("read msg data error", err)
+				c.ExitChan <- true
+				continue
+			}
+		}
+		msg.SetData(data)
 
 		//得到当前conn数据的Request请求数据
 		req := Request{
 			conn: c,
-			data: buf,
+			msg:  msg,
 		}
 
 		//调用执行注册的路由方法
@@ -112,7 +135,26 @@ func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
 }
 
-//发送数据，将数据发送给远程的客户端
-func (c *Connection) Send(data []byte) error {
+//提供一个 SendMsg 方法，将我们要发送给客户端的数据，先进行封包，在进行发送
+func (c *Connection) SendMsg(msgId uint32, data []byte) error {
+	if c.isClosed {
+		return errors.New("Connection closed when send Msg")
+	}
+
+	//将 data 封包， 并发送
+	dp := NewDataPack()
+	binaryMsg, err := dp.Pack(NewMsgPackage(msgId, data))
+	if err != nil {
+		fmt.Println("Pack error msg id = ", msgId)
+		return errors.New("Pack error msg")
+	}
+
+	//客户端写回
+	if _, err := c.Conn.Write(binaryMsg); err != nil {
+		fmt.Println("Write msg id = ", msgId, "error")
+		c.ExitChan <- true
+		return errors.New("conn Write error")
+	}
+
 	return nil
 }

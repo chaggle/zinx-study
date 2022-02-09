@@ -3,15 +3,24 @@ package znet
 import "github.com/chaggle/zinx-study/ziface"
 
 type Request struct {
-	conn ziface.IConnection //已经和客户端建立好的链接
+	//已经和客户端建立好的链接
+	conn ziface.IConnection
 
-	data []byte //客户端请求的数据
+	//客户端请求的数据
+	msg ziface.IMessage
 }
 
+//获取请求连接信息
 func (r *Request) GetConnection() ziface.IConnection {
 	return r.conn
 }
 
+//获取请求消息的信息
 func (r *Request) GetData() []byte {
-	return r.data
+	return r.msg.GetData()
+}
+
+//获取请求消息的ID
+func (r *Request) GetMsgID() uint32 {
+	return r.msg.GetMsgId()
 }

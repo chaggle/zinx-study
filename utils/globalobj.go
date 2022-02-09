@@ -61,5 +61,6 @@ func init() {
 		MaxPackageSize: 4096,
 	}
 
+	//V0.5版本进行注释掉！
 	GlobalObject.Reload()
 }

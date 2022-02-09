@@ -1,9 +1,9 @@
 ---
 title: "Zinx框架的学习"
 date: 2022-01-10T10:14:32+08:00
+lastMod: 2022-02-09T10:17:32+08:00
 tag: ["Go", "zinx"]
 categories: ["Go"]
-draft: true
 ---
 
 # zinx 框架
@@ -131,3 +131,53 @@ draft: true
 > 提供一个 GlobalObject 对象 --- var GlobalObject \*GlobalObj
 >
 > 使用 zinx0.4 版本进行开发
+
+## V0.5 消息封装
+
+> 定义消息的结构 Message
+>
+> 属性
+> 消息的 ID
+>
+> 消息的长度
+>
+> 消息的内容
+>
+> 方法
+> SetMsgId(uint32) //设置消息 ID
+>
+> SetData([]byte) //设置消息内容
+>
+> SetDataLen(uint32) //设置消息长度
+>
+> GetDataLen() uint32 //获取消息长度
+>
+> GetMsgId() uint32 //获取消息 ID
+>
+> GetData() []byte //获取消息内容
+>
+> 定义解决 TCP 粘包问题的封包拆包的模块
+>
+> 针对 Message 进行 TLV 格式的封装 -- func (dp \*DataPack) Pack(msg ziface.IMessage) ([]byte, error)
+>
+> 写 Message 的长度
+>
+> 写 Message 的 ID
+>
+> 写 Message 的内容
+>
+> 针对 Message 进行 TLV 格式的拆包 -- func (dp \*DataPack) Unpack(binaryData []byte) (ziface.IMessage, error)
+>
+> 先读取固定长度的 head ---> 消息的长度和消息的类型
+>
+> 再根据消息内容的长度，再进行一次读写，从 conn 中读取消息的内容
+>
+> 将消息封装机制集成到 Zinx 框架中
+>
+> 将 Message 添加到 Request 属性字段
+>
+> 修改连接读取数据的机制，将之前的单纯读取 byte 改成拆包形式，读取按照 TLV 形式进行读取
+>
+> 给链接提供一个发包的机制：将发送的消息打包，再发送
+>
+> 使用 zinxV0.5 开发
