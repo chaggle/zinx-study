@@ -1,0 +1,8 @@
+{
+    "Name": "ZinxV0.6 demoServerApp",
+    "Version": "V0.6",
+    "TcpPort": 8999,
+    "Host": "127.0.0.1",
+    "MaxConn": 3,
+    "MaxPackageSize": 4096
+}

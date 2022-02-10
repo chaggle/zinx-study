@@ -13,25 +13,31 @@ import (
 	链接模块
 */
 type Connection struct {
-	Conn *net.TCPConn //当前链接的 socket TCP套接字
 
-	ConnID uint32 //链接的ID
+	//当前链接的 socket TCP套接字
+	Conn *net.TCPConn
 
-	isClosed bool //当前链接的状态
+	//链接的ID
+	ConnID uint32
 
-	ExitChan chan bool //告知当前链接已经退出的 channel
+	//当前链接的状态
+	isClosed bool
 
-	Router ziface.IRouter //该链接处理方法 Router
+	//告知当前链接已经退出的 channel
+	ExitChan chan bool
+
+	//消息管理 MsgID 和对应处理方法的消息管理模块
+	msgHandler ziface.IMsgHandle
 }
 
 //初始化链接模块
-func NewConnection(conn *net.TCPConn, connid uint32, router ziface.IRouter) *Connection {
+func NewConnection(conn *net.TCPConn, connid uint32, msgHandler ziface.IMsgHandle) *Connection {
 	c := &Connection{
-		Conn:     conn,
-		ConnID:   connid,
-		isClosed: false,
-		ExitChan: make(chan bool, 1),
-		Router:   router,
+		Conn:       conn,
+		ConnID:     connid,
+		isClosed:   false,
+		ExitChan:   make(chan bool, 1),
+		msgHandler: msgHandler,
 	}
 
 	return c
@@ -81,14 +87,8 @@ func (c *Connection) StartRead() {
 			msg:  msg,
 		}
 
-		//调用执行注册的路由方法
-		go func(request ziface.IRequest) {
-			c.Router.PreHandle(request)
-			c.Router.Handle(request)
-			c.Router.PostHandle(request)
-		}(&req)
-		//从路由中，找到注册绑定的 Conn 对应的 Router 调用
-
+		//从绑定好的消息和对应的消息处理方法中执行对应的 Handle 方法
+		go c.msgHandler.DoMsgHandler(&req)
 	}
 
 }
