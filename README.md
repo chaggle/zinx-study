@@ -185,7 +185,9 @@ categories: ["Go"]
 ## V0.6 多路由模式
 
 > 消息管理模块(支持多路由 API 调度管理)
+>
 > 属性
+>
 > 集合 - 消息 ID 与对应 router 的关系 - map Apis map[uint32]ziface.IRouter
 >
 > 方法
@@ -195,9 +197,23 @@ categories: ["Go"]
 > ​ 添加路由方法到 map 集合中 func (mh \*MsgHandle) AddRouter(msgID uint32, router ziface.IRouter)
 >
 > 消息管理模块集成到 Zinx 框架中
+>
 > 将 server 模块里面的 Router 属性变为 MsgHandle 属性
+>
 > 将 server 模块中的 AddRouter 修改调用 MsgHandler 的 AddRouter
+>
 > 将 connection 模块中的 Router 属性替换为 MsgHandle 属性
+>
 > 将 connection 模块中的 Router 业务调度 Router 的业务改为调度 MsgHandle 调度， 并修改 StartRead 方法
 >
 > 使用 Zinx V0.6 版本开发
+
+## V0.7 读写协程分离(小修改，新增一个 goroutine 即可)
+
+> 1、添加一个 Reader 和 Writer 之间通信的 channel
+>
+> 2、添加一个 Writer Goroutine
+>
+> 3、Reader 由之前发送给客户端 改成 发送给 通信 Channel
+>
+> 4、启动 Reader 和 Writer 一同工作

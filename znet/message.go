@@ -2,10 +2,14 @@ package znet
 
 type Message struct {
 
-	//字段定义
-	Id      uint32 //消息ID
-	DataLen uint32 //消息长度
-	Data    []byte //消息内容
+	//消息ID
+	Id uint32
+
+	//消息长度
+	DataLen uint32
+
+	//消息内容
+	Data []byte
 }
 
 //创建一个 Message 消息包

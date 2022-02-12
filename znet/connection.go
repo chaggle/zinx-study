@@ -23,21 +23,25 @@ type Connection struct {
 	//当前链接的状态
 	isClosed bool
 
-	//告知当前链接已经退出的 channel
-	ExitChan chan bool
-
 	//消息管理 MsgID 和对应处理方法的消息管理模块
 	msgHandler ziface.IMsgHandle
+
+	//告知当前链接已经退出的 channel
+	ExitBuffChan chan bool
+
+	//无缓冲的管道，用于读、写两个 Goroutine 之间的通信
+	msgChan chan []byte
 }
 
 //初始化链接模块
 func NewConnection(conn *net.TCPConn, connid uint32, msgHandler ziface.IMsgHandle) *Connection {
 	c := &Connection{
-		Conn:       conn,
-		ConnID:     connid,
-		isClosed:   false,
-		ExitChan:   make(chan bool, 1),
-		msgHandler: msgHandler,
+		Conn:         conn,
+		ConnID:       connid,
+		isClosed:     false,
+		msgHandler:   msgHandler,
+		ExitBuffChan: make(chan bool, 1),
+		msgChan:      make(chan []byte), //msgChan 初始化
 	}
 
 	return c
@@ -57,7 +61,7 @@ func (c *Connection) StartRead() {
 		headData := make([]byte, dp.GetHeadLen())
 		if _, err := io.ReadFull(c.GetTCPConnection(), headData); err != nil {
 			fmt.Println("read msg head error: ", err)
-			c.ExitChan <- true
+			c.ExitBuffChan <- true
 			continue
 		}
 
@@ -65,7 +69,7 @@ func (c *Connection) StartRead() {
 		msg, err := dp.Unpack(headData)
 		if err != nil {
 			fmt.Println("unpack error: ", err)
-			c.ExitChan <- true
+			c.ExitBuffChan <- true
 			continue
 		}
 
@@ -75,7 +79,7 @@ func (c *Connection) StartRead() {
 			data = make([]byte, msg.GetDataLen()) //此处小细节是 := 为临时复制，生命周期不能走出 if 语句，要变为 =
 			if _, err := io.ReadFull(c.GetTCPConnection(), data); err != nil {
 				fmt.Println("read msg data error", err)
-				c.ExitChan <- true
+				c.ExitBuffChan <- true
 				continue
 			}
 		}
@@ -93,13 +97,39 @@ func (c *Connection) StartRead() {
 
 }
 
+//创建写业务的 Goroutine
+func (c *Connection) StartWrite() {
+	fmt.Println("[Writer Goroutine is running]")
+	defer fmt.Println("connID = ", c.ConnID, "Writer is exit, remoter addr is ", c.RemoteAddr().String())
+	for {
+		select {
+		case data := <-c.msgChan:
+			if _, err := c.Conn.Write(data); err != nil {
+				fmt.Println("Send Data error: ", err)
+				return
+			}
+		case <-c.ExitBuffChan:
+			//conn 已经关闭
+			return
+		}
+	}
+}
+
 //启动链接
 func (c *Connection) Start() {
 	fmt.Println("Conn start ... ConnID = ", c.ConnID)
 
-	//启动从当前链接读取数据的 go
+	//启动用户从客户端读取数据的 go
 	go c.StartRead()
 
+	//启动用户从客户端写回客户端数据的 go
+	go c.StartWrite()
+
+	for {
+		<-c.ExitBuffChan
+		//得到退出消息，不在阻塞
+		return
+	}
 }
 
 //停止链接
@@ -117,7 +147,7 @@ func (c *Connection) Stop() {
 	c.Conn.Close()
 
 	// channel 资源回收
-	close(c.ExitChan)
+	close(c.ExitBuffChan)
 }
 
 //获取链接绑定的 socket conn
@@ -150,11 +180,8 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 	}
 
 	//客户端写回
-	if _, err := c.Conn.Write(binaryMsg); err != nil {
-		fmt.Println("Write msg id = ", msgId, "error")
-		c.ExitChan <- true
-		return errors.New("conn Write error")
-	}
+	c.msgChan <- binaryMsg
 
 	return nil
+
 }
