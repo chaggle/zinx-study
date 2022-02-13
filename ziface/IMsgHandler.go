@@ -11,4 +11,10 @@ type IMsgHandle interface {
 
 	//为消息添加具体的业务逻辑
 	AddRouter(msgId uint32, router IRouter)
+
+	//启动 Work 工作池
+	StartWorkerPool()
+
+	//将消息传递给 TaskQueue，由 work 进行处理
+	SendMsgToTaskQueue(request IRequest)
 }

@@ -15,17 +15,37 @@ type GlobalObj struct {
 	/*
 		server 配置
 	*/
-	TcpServer ziface.IServer //zinx 全局的 Server 对象
-	Host      string         //当前服务器主机监听IP
-	TcpPort   int            //当前服务器主机监听端口
-	Name      string         //当前服务器名称
+
+	//zinx 全局的 Server 对象
+	TcpServer ziface.IServer
+
+	//当前服务器主机监听IP
+	Host string
+
+	//当前服务器主机监听端口
+	TcpPort int
+
+	//当前服务器名称
+	Name string
 
 	/*
 		zinx 配置
 	*/
-	Version        string //当前 zinx 版本号
-	MaxConn        int    //当前服务器允许的最大链接数
-	MaxPackageSize uint32 //当前zinx框架数据包的最大值
+
+	//当前 zinx 版本号
+	Version string
+
+	//当前服务器允许的最大链接数
+	MaxConn int
+
+	//当前zinx框架数据包的最大值
+	MaxPackageSize uint32
+
+	//业务工作 Work 池的对应Goroutine数量
+	WorkPoolSize uint32
+
+	//业务工作 Work 池的对应负责的消息队列的最大存储数量
+	MaxWorkerTaskLen uint32
 }
 
 /*
@@ -53,12 +73,14 @@ func (g *GlobalObj) Reload() {
 func init() {
 	//配置文件未加载时候的一些默认值
 	GlobalObject = &GlobalObj{
-		Name:           "ZinxServerApp",
-		Version:        "V0.4",
-		TcpPort:        7777,
-		Host:           "0.0.0.0",
-		MaxConn:        1000,
-		MaxPackageSize: 4096,
+		Name:             "ZinxServerApp",
+		Version:          "V0.4",
+		TcpPort:          7777,
+		Host:             "0.0.0.0",
+		MaxConn:          1000,
+		MaxPackageSize:   4096,
+		WorkPoolSize:     10,
+		MaxWorkerTaskLen: 1024,
 	}
 
 	//V0.5版本进行注释掉！
