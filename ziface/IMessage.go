@@ -5,16 +5,16 @@ package ziface
 */
 
 type IMessage interface {
-	//获取消息长度
+	// GetDataLen 获取消息长度
 	GetDataLen() uint32
-	//获取消息ID
+	// GetMsgId 获取消息ID
 	GetMsgId() uint32
-	//获取消息内容
+	// GetData 获取消息内容
 	GetData() []byte
-	//设置消息ID
+	// SetMsgId 设置消息ID
 	SetMsgId(uint32)
-	//设置消息内容
+	// SetData 设置消息内容
 	SetData([]byte)
-	//设置消息长度
+	// SetDataLen 设置消息长度
 	SetDataLen(uint32)
 }

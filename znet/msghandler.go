@@ -23,7 +23,7 @@ type MsgHandle struct {
 	TaskQueue []chan ziface.IRequest
 }
 
-//创建 MsgHandle 的方法
+// NewMsgHandle 创建 MsgHandle 的方法
 func NewMsgHandle() *MsgHandle {
 	return &MsgHandle{
 		Apis:         make(map[uint32]ziface.IRouter),
@@ -32,7 +32,7 @@ func NewMsgHandle() *MsgHandle {
 	}
 }
 
-//调度/执行对应 Router 消息处理方法，马上以非阻塞的方法处理消息
+// DoMsgHandler 调度或执行对应 Router 消息处理方法，马上以非阻塞的方法处理消息
 func (mh *MsgHandle) DoMsgHandler(request ziface.IRequest) {
 	//1 从 Request 中找到 msgID
 	handler, ok := mh.Apis[request.GetMsgID()]
@@ -47,7 +47,7 @@ func (mh *MsgHandle) DoMsgHandler(request ziface.IRequest) {
 
 }
 
-//为消息添加具体的业务逻辑
+// AddRouter 为消息添加具体的业务逻辑
 func (mh *MsgHandle) AddRouter(msgID uint32, router ziface.IRouter) {
 	//1 判断当前 msg 绑定的 API 处理方法是否存在
 	if _, ok := mh.Apis[msgID]; ok {
@@ -60,7 +60,7 @@ func (mh *MsgHandle) AddRouter(msgID uint32, router ziface.IRouter) {
 	fmt.Println("Add api MsgId = ", msgID)
 }
 
-//启动一个 Worker 的工作流程
+// StartOneWorker 启动一个 Worker 的工作流程
 func (mh *MsgHandle) StartOneWorker(workerID int, taskQueue chan ziface.IRequest) {
 	fmt.Println("WorkID = ", workerID, "is started !")
 	//不断等待队列中的消息
@@ -73,7 +73,7 @@ func (mh *MsgHandle) StartOneWorker(workerID int, taskQueue chan ziface.IRequest
 	}
 }
 
-//启动 Work 工作池
+// StartWorkerPool 启动 Work 工作池
 func (mh *MsgHandle) StartWorkerPool() {
 	//遍历需要启动的 worker 的数量，依次进行启动！
 	for i := 0; i < int(mh.WorkPoolSize); i++ {
@@ -87,7 +87,7 @@ func (mh *MsgHandle) StartWorkerPool() {
 
 }
 
-//将消息传递给 TaskQueue，由 work 进行处理
+// SendMsgToTaskQueue 将消息传递给 TaskQueue，由 work 进行处理
 func (mh *MsgHandle) SendMsgToTaskQueue(request ziface.IRequest) {
 	//根据 ConnID 来分配当前的连接应该由哪个 worker 负责
 	//轮询的平均分配法则

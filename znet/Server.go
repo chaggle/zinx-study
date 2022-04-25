@@ -9,7 +9,7 @@ import (
 	"github.com/chaggle/zinx-study/ziface"
 )
 
-//定义服务器模块
+// Server 定义服务器模块
 type Server struct {
 
 	//服务器的名称
@@ -30,7 +30,7 @@ type Server struct {
 
 //============== 实现 ziface.IServer 里的接口 ========
 
-//启动服务器方法实现
+// Start 启动服务器方法实现
 func (s *Server) Start() {
 
 	//打印输出
@@ -53,7 +53,7 @@ func (s *Server) Start() {
 		}
 
 		//2 监听服务器地址
-		listenner, err := net.ListenTCP(s.IPVersion, addr)
+		listener, err := net.ListenTCP(s.IPVersion, addr)
 		if err != nil {
 			fmt.Println("listen", s.IP, "error :", err)
 			return
@@ -67,7 +67,7 @@ func (s *Server) Start() {
 
 		for {
 			//阻塞等待客户端的建立连接的请求，如果有客户端链接，阻塞返回
-			conn, err := listenner.AcceptTCP()
+			conn, err := listener.AcceptTCP()
 			if err != nil {
 				fmt.Println("Accept error :", err)
 				continue //因为在一个 goroutine 里面
@@ -83,12 +83,12 @@ func (s *Server) Start() {
 	}()
 }
 
-//停止服务器方法实现
+// Stop 停止服务器方法实现
 func (s *Server) Stop() {
 	fmt.Println("[STOP] Zinx server, name :", s.Name)
 }
 
-//运行服务器方法实现
+// Serve 运行服务器方法实现
 func (s *Server) Serve() {
 	s.Start()
 
@@ -99,13 +99,13 @@ func (s *Server) Serve() {
 	//select {}
 }
 
-//路由功能，给当前服务器注册一个路由方法，供客户端链接使用
+// AddRouter 路由功能，给当前服务器注册一个路由方法，供客户端链接使用
 func (s *Server) AddRouter(msgID uint32, router ziface.IRouter) {
 	s.msgHandler.AddRouter(msgID, router)
 	fmt.Println("Add Router Success")
 }
 
-//初始化服务器方法实现
+// NewServer 初始化服务器方法实现
 func NewServer() ziface.IServer {
 	//先初始化全局配置文件
 	utils.GlobalObject.Reload()

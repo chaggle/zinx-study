@@ -10,17 +10,17 @@ type Request struct {
 	msg ziface.IMessage
 }
 
-//获取请求连接信息
+// GetConnection 获取请求连接信息
 func (r *Request) GetConnection() ziface.IConnection {
 	return r.conn
 }
 
-//获取请求消息的信息
+// GetData 获取请求消息的信息
 func (r *Request) GetData() []byte {
 	return r.msg.GetData()
 }
 
-//获取请求消息的ID
+// GetMsgID 获取请求消息的ID
 func (r *Request) GetMsgID() uint32 {
 	return r.msg.GetMsgId()
 }

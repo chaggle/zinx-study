@@ -33,7 +33,7 @@ type Connection struct {
 	msgChan chan []byte
 }
 
-//初始化链接模块
+// NewConnection 初始化链接模块
 func NewConnection(conn *net.TCPConn, connid uint32, msgHandler ziface.IMsgHandle) *Connection {
 	c := &Connection{
 		Conn:         conn,
@@ -47,7 +47,7 @@ func NewConnection(conn *net.TCPConn, connid uint32, msgHandler ziface.IMsgHandl
 	return c
 }
 
-//链接的读业务的方法
+// StartRead 链接的读业务的方法
 func (c *Connection) StartRead() {
 	fmt.Println("[Read Goroutine is running ...]")
 	defer fmt.Println("connID = ", c.ConnID, "Reader is exit, remoter addr is ", c.RemoteAddr().String())
@@ -97,7 +97,7 @@ func (c *Connection) StartRead() {
 
 }
 
-//创建写业务的 Goroutine
+// StartWrite 创建写业务的 Goroutine
 func (c *Connection) StartWrite() {
 	fmt.Println("[Writer Goroutine is running]")
 	defer fmt.Println("connID = ", c.ConnID, "Writer is exit, remoter addr is ", c.RemoteAddr().String())
@@ -115,7 +115,7 @@ func (c *Connection) StartWrite() {
 	}
 }
 
-//启动链接
+// Start 启动链接
 func (c *Connection) Start() {
 	fmt.Println("Conn start ... ConnID = ", c.ConnID)
 
@@ -132,7 +132,7 @@ func (c *Connection) Start() {
 	}
 }
 
-//停止链接
+// Stop 停止链接
 func (c *Connection) Stop() {
 	fmt.Println("Conn stop ... ConnID = ", c.ConnID)
 
@@ -144,31 +144,31 @@ func (c *Connection) Stop() {
 	c.isClosed = true
 
 	//关闭 socket 链接
-	c.Conn.Close()
+	_ = c.Conn.Close()
 
 	// channel 资源回收
 	close(c.ExitBuffChan)
 }
 
-//获取链接绑定的 socket conn
+// GetTCPConnection 获取链接绑定的 socket conn
 func (c *Connection) GetTCPConnection() *net.TCPConn {
 	return c.Conn
 }
 
-//获取当前链接模块的 ID
+// GetConnID 获取当前链接模块的 ID
 func (c *Connection) GetConnID() uint32 {
 	return c.ConnID
 }
 
-//获取远程客户端的 TCP状态 IP port
+// RemoteAddr 获取远程客户端的 TCP状态 IP port
 func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
 }
 
-//提供一个 SendMsg 方法，将我们要发送给客户端的数据，先进行封包，在进行发送
+// SendMsg 提供一个 SendMsg 方法，将我们要发送给客户端的数据，先进行封包，在进行发送
 func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 	if c.isClosed {
-		return errors.New("Connection closed when send Msg")
+		return errors.New("connection closed when send Msg")
 	}
 
 	//将 data 封包， 并发送

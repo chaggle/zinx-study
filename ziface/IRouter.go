@@ -6,10 +6,10 @@ package ziface
 */
 
 type IRouter interface {
-	//处理conn业务之前的方法
+	// PreHandle 处理 conn 业务之前的方法
 	PreHandle(request IRequest)
-	//处理conn业务的主方法
+	// Handle 处理 conn 业务的主方法
 	Handle(request IRequest)
-	//处理conn业务之后的方法
+	// PostHandle 处理 conn 业务之后的方法
 	PostHandle(request IRequest)
 }

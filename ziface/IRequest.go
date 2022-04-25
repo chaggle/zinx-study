@@ -7,10 +7,10 @@ package ziface
 
 type IRequest interface {
 
-	//得到当前的链接
+	// GetConnection 得到当前的链接
 	GetConnection() IConnection
-	//得到请求的数据
+	// GetData 得到请求的数据
 	GetData() []byte
-	//得到请求的ID
+	// GetMsgID 得到请求的ID
 	GetMsgID() uint32
 }

@@ -6,10 +6,10 @@ package ziface
 */
 
 type IDataPack interface {
-	//获取包的头部长度的方法
+	// GetHeadLen 获取包的头部长度的方法
 	GetHeadLen() uint32
-	//封包方法
+	// Pack 封包方法
 	Pack(msg IMessage) ([]byte, error)
-	//封包方法
+	// Unpack 封包方法
 	Unpack([]byte) (IMessage, error)
 }
