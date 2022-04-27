@@ -9,15 +9,12 @@ import (
 	"github.com/chaggle/zinx-study/ziface"
 )
 
-/*
-	链接模块
-*/
 type Connection struct {
 
-	//当前链接的 socket TCP套接字
-	Conn *net.TCPConn
+	//当前连接归属于哪个 Server
+	TCPServer ziface.IServer
 
-	//链接的ID
+	Conn   *net.TCPConn
 	ConnID uint32
 
 	//当前链接的状态
@@ -34,8 +31,9 @@ type Connection struct {
 }
 
 // NewConnection 初始化链接模块
-func NewConnection(conn *net.TCPConn, connid uint32, msgHandler ziface.IMsgHandle) *Connection {
+func NewConnection(server ziface.IServer, conn *net.TCPConn, connid uint32, msgHandler ziface.IMsgHandle) *Connection {
 	c := &Connection{
+		TCPServer:    server,
 		Conn:         conn,
 		ConnID:       connid,
 		isClosed:     false,
@@ -44,6 +42,7 @@ func NewConnection(conn *net.TCPConn, connid uint32, msgHandler ziface.IMsgHandl
 		msgChan:      make(chan []byte), //msgChan 初始化
 	}
 
+	c.TCPServer.GetConnManager().Add(c)
 	return c
 }
 
@@ -76,7 +75,7 @@ func (c *Connection) StartRead() {
 		//根据得到的 datalen 读取 data，放在 msg.Data 中
 		var data []byte
 		if msg.GetDataLen() > 0 {
-			data = make([]byte, msg.GetDataLen()) //此处小细节是 := 为临时复制，生命周期不能走出 if 语句，要变为 =
+			data = make([]byte, msg.GetDataLen()) //上面有 var 定义了全局，此处是传值，并非赋值！
 			if _, err := io.ReadFull(c.GetTCPConnection(), data); err != nil {
 				fmt.Println("read msg data error", err)
 				c.ExitBuffChan <- true
@@ -146,8 +145,15 @@ func (c *Connection) Stop() {
 	//关闭 socket 链接
 	_ = c.Conn.Close()
 
+	//关闭Writer Goroutine
+	c.ExitBuffChan <- true
+
+	//将链接从 连接管理器中删除
+	c.TCPServer.GetConnManager().Remove(c)
+
 	// channel 资源回收
 	close(c.ExitBuffChan)
+	close(c.msgChan)
 }
 
 // GetTCPConnection 获取链接绑定的 socket conn
@@ -176,12 +182,11 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 	binaryMsg, err := dp.Pack(NewMsgPackage(msgId, data))
 	if err != nil {
 		fmt.Println("Pack error msg id = ", msgId)
-		return errors.New("Pack error msg")
+		return errors.New("pack error msg")
 	}
 
 	//客户端写回
 	c.msgChan <- binaryMsg
 
 	return nil
-
 }

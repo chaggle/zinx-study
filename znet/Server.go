@@ -26,6 +26,8 @@ type Server struct {
 
 	//当前 Server 的消息管理模块，用于绑定 MsgId 和对应的处理方法
 	msgHandler ziface.IMsgHandle
+
+	ConnManager ziface.IConnManager
 }
 
 //============== 实现 ziface.IServer 里的接口 ========
@@ -73,8 +75,13 @@ func (s *Server) Start() {
 				continue //因为在一个 goroutine 里面
 			}
 
+			//如果超出了最大的链接数，则拒绝启动链接
+			if s.GetConnManager().Len() > utils.GlobalObject.MaxConn {
+				_ = conn.Close()
+				continue
+			}
 			// 将处理新连接的业务方法 和 conn 进行绑定， 得到我们的链接模块
-			dealConn := NewConnection(conn, cid, s.msgHandler)
+			dealConn := NewConnection(s, conn, cid, s.msgHandler)
 			cid++
 
 			//启动当前的链接业务
@@ -86,6 +93,9 @@ func (s *Server) Start() {
 // Stop 停止服务器方法实现
 func (s *Server) Stop() {
 	fmt.Println("[STOP] Zinx server, name :", s.Name)
+
+	//将其他需要清理的连接信息或者其他信息 也要一并停止或者清理
+	s.GetConnManager().ClearConn()
 }
 
 // Serve 运行服务器方法实现
@@ -105,17 +115,22 @@ func (s *Server) AddRouter(msgID uint32, router ziface.IRouter) {
 	fmt.Println("Add Router Success")
 }
 
+func (s *Server) GetConnManager() ziface.IConnManager {
+	return s.ConnManager
+}
+
 // NewServer 初始化服务器方法实现
 func NewServer() ziface.IServer {
 	//先初始化全局配置文件
 	utils.GlobalObject.Reload()
 
 	s := &Server{
-		Name:       utils.GlobalObject.Name,
-		IPVersion:  "tcp4", // 还没有实现 tcp6 版本
-		IP:         utils.GlobalObject.Host,
-		Port:       utils.GlobalObject.TcpPort,
-		msgHandler: NewMsgHandle(), //MsgHandler 初始化
+		Name:        utils.GlobalObject.Name,
+		IPVersion:   "tcp4", // 还没有实现 tcp6 版本
+		IP:          utils.GlobalObject.Host,
+		Port:        utils.GlobalObject.TcpPort,
+		msgHandler:  NewMsgHandle(), //MsgHandler 初始化
+		ConnManager: NewConnManager(),
 	}
 
 	return s

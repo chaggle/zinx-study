@@ -33,7 +33,7 @@ func main() {
 
 		//读取流中的 head 部分
 		headData := make([]byte, dp.GetHeadLen())
-		_, err = io.ReadFull(conn, headData) //此处不能用 := 因为_, err := conn.Write(binaryMsg) 已经使用
+		_, err = io.ReadFull(conn, headData)
 		if err != nil {
 			fmt.Println("read head error")
 			break

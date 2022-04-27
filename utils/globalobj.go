@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	"github.com/chaggle/zinx-study/ziface"
 )
@@ -56,8 +57,13 @@ var GlobalObject *GlobalObj
 
 /*
 	从 zinx.json 加载配置文件
+    优化
+    1、可以进一步进行配置的热加载，实现动态修改配置文件
+    2、配置保存全局变量，为了模拟业务场景，存放服务器的配置数据，是否能存到
+       redis 这样的内存缓存数据库中，虽然有点感觉是浪费，但是也能考虑。
 */
 func (g *GlobalObj) Reload() {
+
 	data, err := ioutil.ReadFile("conf/zinx.json")
 	if err != nil {
 		panic(err)
@@ -66,7 +72,8 @@ func (g *GlobalObj) Reload() {
 	//将 json 数据解析到 struct 中
 	err = json.Unmarshal(data, &GlobalObject)
 	if err != nil {
-		panic(err) //没必要执行下去，直接 panic 返回即可
+		/*panic(err)*/ //解析配置文件都失败了，当然没必要执行下去。
+		log.Fatal("解析配置文件出错！")
 	}
 }
 

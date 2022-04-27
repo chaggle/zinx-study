@@ -62,7 +62,7 @@ func main() {
 	sendData1 = append(sendData1, sendData2...)
 
 	//一起发送
-	conn.Write(sendData1)
+	_, _ = conn.Write(sendData1)
 
 	//客户端阻塞
 	select {}

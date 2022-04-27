@@ -12,12 +12,11 @@ import (
 	单元进行函数的测试
 */
 
-//ping test 自定义路由
+// PingRouter 自定义路由
 type PingRouter struct {
 	znet.BaseRouter
 }
 
-//Test Handle
 func (this *PingRouter) Handle(request ziface.IRequest) {
 	fmt.Println("Call Router Handle")
 	fmt.Println("recieve from client: MsgId = ", request.GetMsgID(), ", data = ", string(request.GetData()))

@@ -1,15 +1,9 @@
 package znet
 
 type Message struct {
-
-	//消息ID
-	Id uint32
-
-	//消息长度
+	Id      uint32
 	DataLen uint32
-
-	//消息内容
-	Data []byte
+	Data    []byte
 }
 
 // NewMsgPackage 创建一个 Message 消息包
