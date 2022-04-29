@@ -3,11 +3,14 @@ package znet
 import (
 	"errors"
 	"fmt"
+	"github.com/chaggle/zinx-study/utils"
 	"io"
 	"net"
 
 	"github.com/chaggle/zinx-study/ziface"
 )
+
+var _ ziface.IConnection = (*Connection)(nil)
 
 type Connection struct {
 
@@ -28,6 +31,9 @@ type Connection struct {
 
 	//无缓冲的管道，用于读、写两个 Goroutine 之间的通信
 	msgChan chan []byte
+
+	//有缓冲的管道，用于读、写两个 Goroutine 之间的通信
+	msgBuffChan chan []byte
 }
 
 // NewConnection 初始化链接模块
@@ -40,6 +46,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connid uint32, msgH
 		msgHandler:   msgHandler,
 		ExitBuffChan: make(chan bool, 1),
 		msgChan:      make(chan []byte), //msgChan 初始化
+		msgBuffChan:  make(chan []byte, utils.GlobalObject.MaxMsgChanLen),
 	}
 
 	c.TCPServer.GetConnManager().Add(c)
@@ -106,6 +113,16 @@ func (c *Connection) StartWrite() {
 			if _, err := c.Conn.Write(data); err != nil {
 				fmt.Println("Send Data error: ", err)
 				return
+			}
+		case data, ok := <-c.msgBuffChan:
+			if ok {
+				if _, err := c.Conn.Write(data); err != nil {
+					fmt.Println("Send Data error: ", err)
+					return
+				}
+			} else {
+				fmt.Println("msgBuffChan is Closed")
+				break
 			}
 		case <-c.ExitBuffChan:
 			//conn 已经关闭
@@ -187,6 +204,25 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 
 	//客户端写回
 	c.msgChan <- binaryMsg
+
+	return nil
+}
+
+func (c *Connection) SendBuffMsg(msgId uint32, data []byte) error {
+	if c.isClosed {
+		return errors.New("connection closed when send Msg")
+	}
+
+	//将 data 封包， 并发送
+	dp := NewDataPack()
+	binaryMsg, err := dp.Pack(NewMsgPackage(msgId, data))
+	if err != nil {
+		fmt.Println("Pack error msg id = ", msgId)
+		return errors.New("pack error msg")
+	}
+
+	//客户端写回
+	c.msgBuffChan <- binaryMsg
 
 	return nil
 }

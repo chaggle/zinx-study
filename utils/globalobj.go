@@ -47,6 +47,9 @@ type GlobalObj struct {
 
 	//业务工作 Work 池的对应负责的消息队列的最大存储数量
 	MaxWorkerTaskLen uint32
+
+	//业务工作 buffChannel 最大的存储数
+	MaxMsgChanLen uint32
 }
 
 /*
@@ -88,6 +91,7 @@ func init() {
 		MaxPackageSize:   4096,
 		WorkPoolSize:     10,
 		MaxWorkerTaskLen: 1024,
+		MaxMsgChanLen:    1024,
 	}
 
 	//V0.5版本进行注释掉！

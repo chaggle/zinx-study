@@ -10,6 +10,8 @@ categories: ["Go"]
 
 开始学习 Go 语言实现的 zinx 框架,项目地址为：[https://github.com/chaggle/zinx-study](https://github.com/chaggle/zinx-study)
 
+第一次的练习，之后会重构此项目，进行单独的学习与编写相应的功能，第一次仅仅只是熟悉！
+
 > 使用 go mod 管理, 初始化为 go mod init github.com/chaggle/zinx-study
 > 并部署代码到 github.com 以及使用 go get 同步到本地 Gopath 的 github 包下！
 
@@ -217,3 +219,7 @@ categories: ["Go"]
 > 3、Reader 由之前发送给客户端 改成 发送给 通信 Channel
 >
 > 4、启动 Reader 和 Writer 一同工作
+
+## V0.8 增加worker 工作池，动态保活 goroutine
+
+## v0.9 增加 conn 链接管理模块。
